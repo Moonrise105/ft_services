@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wp
+  labels:
+    app: wp
+spec:
+  selector:
+    matchLabels:
+      app: wp
+  template:
+    metadata:
+      labels:
+        app: wp  #service will look for those pods labels
+    spec:
+      containers:
+      - name: wp
+        image: wp
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5050
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user-name
+        - name: USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp
+  labels:
+    owner: ctobias
+  annotations:
+    metallb.universe.tf/allow-shared-ip: shared
+spec:
+  selector:
+    app: wp  #selecting pods with those labels
+  ports:
+    - protocol: TCP
+      port: 5050       #port on loadbalancer
+      targetPort: 5050  #port on pod
+  type: LoadBalancer

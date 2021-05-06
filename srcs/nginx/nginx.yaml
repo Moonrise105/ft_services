@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx  #service will look for those pods labels
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        - containerPort: 22
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    owner: ctobias
+  annotations:
+    metallb.universe.tf/allow-shared-ip: shared
+spec:
+  selector:
+    app: nginx  #selecting pods with those labels
+  ports:
+    - name: http 
+      protocol: TCP
+      port: 80        #port on loadbalancer
+      targetPort: 80  #port on pod
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 443
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 22
+  type: LoadBalancer

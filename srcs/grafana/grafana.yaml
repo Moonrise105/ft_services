@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana  #service will look for those pods labels
+    spec:
+      containers:
+      - name: grafana
+        image: grafana
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    owner: ctobias
+  annotations:
+    metallb.universe.tf/allow-shared-ip: shared
+spec:
+  selector:
+    app: grafana  #selecting pods with those labels
+  ports:
+    - name: grafana
+      protocol: TCP
+      port: 3000        #port on loadbalancer
+      targetPort: 3000  #port on pod
+  type: LoadBalancer

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pma
+  labels:
+    app: pma
+spec:
+  selector:
+    matchLabels:
+      app: pma
+  template:
+    metadata:
+      labels:
+        app: pma  #service will look for those pods labels
+    spec:
+      containers:
+      - name: pma
+        image: pma
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+        env:
+        - name: USER_NAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user-name
+        - name: USER_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pma
+  labels:
+    owner: ctobias
+  annotations:
+    metallb.universe.tf/allow-shared-ip: shared
+spec:
+  selector:
+    app: pma  #selecting pods with those labels
+  ports:
+    - protocol: TCP
+      port: 5000       #port on loadbalancer
+      targetPort: 5000  #port on pod
+  type: LoadBalancer

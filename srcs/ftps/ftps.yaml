@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ftps
+  labels:
+    app: ftps
+spec:
+  selector:
+    matchLabels:
+      app: ftps
+  template:
+    metadata:
+      labels:
+        app: ftps  #service will look for those pods labels
+    spec:
+      containers:
+      - name: ftps
+        image: ftps
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 21
+        - containerPort: 21100
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ftps
+  labels:
+    owner: ctobias
+  annotations:
+    metallb.universe.tf/allow-shared-ip: shared
+spec:
+  selector:
+    app: ftps  #selecting pods with those labels
+  ports:
+    - name: ftp
+      protocol: TCP
+      port: 21        #port on loadbalancer
+      targetPort: 21  #port on pod
+    - name: data
+      protocol: TCP
+      port: 21100
+      targetPort: 21100
+  type: LoadBalancer

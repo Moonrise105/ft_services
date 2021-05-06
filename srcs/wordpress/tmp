@@ -1,0 +1,31 @@
+mkdir /etc/telegraf
+cp /etc/telegraf.conf /etc/telegraf/telegraf.conf
+sed -i "s~# database = \"telegraf\"~database = \"wordpress\"~g" /etc/telegraf/telegraf.conf
+sed -i "s~# urls = \[\"unix:///var/run/influxdb.sock\"\]~urls = \[\"http://influxdb:8086\"\]~g" /etc/telegraf/telegraf.conf
+
+
+#
+wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+chmod u+x wp-cli.phar
+mv wp-cli.phar /usr/local/bin/wp
+cd www/
+wp core download
+wp db check
+while [ $? != 0 ];
+do
+    echo "Waiting mysql db."
+    sleep 10s
+	wp db check
+done
+wp core is-installed
+if [ $? != 0  ];
+then
+wp core install --url="localhost"  --title="ctobias-testtest" \
+ --admin_user="admin" --admin_password="admin" --admin_email="admin@email.ru"
+wp user create user1 user1@mail.ru --user_pass=user1
+wp user create user2 user2@mail.ru --user_pass=user2
+wp user create user3 user3@mail.ru --user_pass=user3
+fi
+cd /
+chown -R www:www /var/lib/nginx && chown -R www:www /www && chown -R www:www /etc/nginx && echo chown
+/usr/bin/supervisord -c /etc/supervisord.conf
